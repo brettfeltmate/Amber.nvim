@@ -5,6 +5,7 @@ local M = {}
 ---@field variant? string Theme variant (currently only "amber")
 ---@field transparent? boolean Enable transparent background
 ---@field terminal_colors? boolean Set terminal colors
+---@field protect_colorscheme? boolean Protect against colorscheme reversion
 ---@field styles? AmberStyles Style configuration
 ---@field integrations? AmberIntegrations Plugin integration settings
 ---@field on_colors? fun(colors: table): nil Callback to modify colors
@@ -38,6 +39,7 @@ M.defaults = {
     variant = "amber",
     transparent = false,
     terminal_colors = true,
+    protect_colorscheme = true,
     
     styles = {
         comments = { italic = true, bold = true },
@@ -71,7 +73,7 @@ M.defaults = {
 
 ---Current configuration (starts as defaults)
 ---@type AmberConfig
-M.options = M.defaults
+M.options = vim.tbl_deep_extend("force", {}, M.defaults)
 
 ---Setup function to configure the theme
 ---@param user_config? AmberConfig User configuration

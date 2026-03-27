@@ -36,4 +36,9 @@ function M.util()
     return require("amber.util")
 end
 
+---Disable colorscheme protection (useful for switching to other colorschemes)
+function M.disable_protection()
+    require("amber.theme").disable_protection()
+end
+
 return M
