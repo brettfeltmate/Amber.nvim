@@ -19,16 +19,10 @@ end
 ---Load and apply the complete theme
 ---@param config AmberConfig Configuration options
 function M.load(config)
-    -- Reset colors
-    if vim.g.colors_name then
-        vim.cmd("highlight clear")
-    end
-    
+    -- Ensure termguicolors is enabled and colorscheme name is set
+    -- (Note: these may already be set by colors/amber.lua but we ensure they're correct)
     vim.opt.termguicolors = true
     vim.g.colors_name = "amber"
-    
-    -- Set up protection against colorscheme reversion
-    M.setup_protection(config)
     
     -- Get colors and apply user color overrides
     local colors_module = require("amber.colors")
@@ -105,64 +99,6 @@ function M.load(config)
         for name, color in pairs(terminal_colors) do
             vim.g[name] = color
         end
-    end
-end
-
----Setup protection against colorscheme reversion
----@param config AmberConfig Configuration options
-function M.setup_protection(config)
-    -- Skip protection if disabled in config (default to true if not specified)
-    if config.protect_colorscheme == false then
-        return
-    end
-    
-    -- Create autocmd group for amber colorscheme protection
-    local amber_group = vim.api.nvim_create_augroup("AmberColorschemeProtection", { clear = true })
-    
-    -- Protect against other colorschemes being loaded when amber should be active
-    vim.api.nvim_create_autocmd("ColorScheme", {
-        group = amber_group,
-        callback = function(args)
-            -- If another colorscheme was loaded but we want amber, restore it
-            if args.match ~= "amber" and vim.g.amber_colorscheme_active then
-                vim.schedule(function()
-                    -- Reload amber colorscheme
-                    require("amber.theme").load(config)
-                end)
-            elseif args.match == "amber" then
-                -- Mark amber as active when it's loaded
-                vim.g.amber_colorscheme_active = true
-            else
-                -- Another colorscheme was intentionally loaded
-                vim.g.amber_colorscheme_active = false
-            end
-        end,
-    })
-    
-    -- Mark amber as currently active
-    vim.g.amber_colorscheme_active = true
-    
-    -- Optional: Protect against highlight clearing on buffer events
-    -- This addresses potential issues with plugins that clear highlights on buffer writes
-    vim.api.nvim_create_autocmd({"BufWrite", "BufEnter"}, {
-        group = amber_group,
-        callback = function()
-            -- Only restore if amber should be active and colors_name doesn't match
-            if vim.g.amber_colorscheme_active and vim.g.colors_name ~= "amber" then
-                vim.schedule(function()
-                    require("amber.theme").load(config)
-                end)
-            end
-        end,
-    })
-end
-
----Disable colorscheme protection
-function M.disable_protection()
-    vim.g.amber_colorscheme_active = false
-    local success = pcall(vim.api.nvim_del_augroup_by_name, "AmberColorschemeProtection")
-    if not success then
-        -- Silently ignore if group doesn't exist
     end
 end
 
